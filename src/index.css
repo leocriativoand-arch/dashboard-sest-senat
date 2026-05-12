@@ -1,4 +1,5 @@
 /* Limpeza total para o build passar */
+@import "tailwindcss";
 body {
   margin: 0;
   font-family: sans-serif;

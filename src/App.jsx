@@ -55,7 +55,7 @@ const orgOptions = ['CNT', 'SEST SENAT', 'ITL', 'SISTEMA TRANSPORTE'];
 const channelOptions = ['Instagram', 'LinkedIn', 'YouTube', 'Facebook', 'X', 'TikTok'];
 
 const SUPABASE_TABLE = 'app_state';
-const SUPABASE_ROW_ID = 'dashboard-sest-senat';
+const SUPABASE_ROW_ID = 'painel-sest-senado';
 
 // --- COMPONENTE EDITÁVEL (CORRIGIDO PARA REACT 19) ---
 // Usa ref + DOM direto para evitar conflito entre dangerouslySetInnerHTML e contentEditable
@@ -170,15 +170,24 @@ const PlatformCard = ({ idPrefix, defaultName, colorTheme, defaultDesc, isAuth, 
   );
 };
 
-const InstitutionCard = ({ idPrefix, defaultName, defaultDesc, isAuth, customTexts, onTextBlur }) => (
-  <div className="p-4 rounded-lg border border-slate-200 bg-slate-50 flex items-start gap-4">
-    <div className="bg-blue-600 text-white p-2 rounded w-16 text-center font-bold text-sm flex-shrink-0 leading-tight" dangerouslySetInnerHTML={{ __html: defaultName.replace(' ', '<br/>') }} />
-    <div>
-      <ET isAuth={isAuth} id={`inst_${idPrefix}_title`} defaultText={useCustomText(customTexts, `inst_${idPrefix}_title`, defaultName)} tag="h4" className="font-bold text-slate-800 mb-1" onTextBlur={onTextBlur} />
-      <ET isAuth={isAuth} id={`inst_${idPrefix}_desc`} defaultText={useCustomText(customTexts, `inst_${idPrefix}_desc`, defaultDesc)} tag="p" className="text-sm text-slate-600" onTextBlur={onTextBlur} />
+const InstitutionCard = ({ idPrefix, defaultName, defaultDesc, isAuth, customTexts, onTextBlur }) => {
+  const stripHTML = (html) => html?.replace(/<[^>]*>/g, '') || '';
+  const titleText = stripHTML(customTexts[`inst_${idPrefix}_title`] || defaultName);
+  const descText = stripHTML(customTexts[`inst_${idPrefix}_desc`] || defaultDesc);
+  return (
+    <div className="p-4 rounded-lg border border-slate-200 bg-slate-50 flex items-start gap-4">
+      <div className="bg-blue-600 text-white p-2 rounded w-16 text-center font-bold text-sm flex-shrink-0 leading-tight">
+        {titleText.split(' ').map((word, i) => (
+          <span key={i} className="block">{word}</span>
+        ))}
+      </div>
+      <div>
+        <ET isAuth={isAuth} id={`inst_${idPrefix}_title`} defaultText={titleText} tag="h4" className="font-bold text-slate-800 mb-1" onTextBlur={onTextBlur} />
+        <ET isAuth={isAuth} id={`inst_${idPrefix}_desc`} defaultText={descText} tag="p" className="text-sm text-slate-600" onTextBlur={onTextBlur} />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // --- ABAS ---
 const TabPanorama = ({ isAuth, customTexts, onTextBlur }) => {
@@ -766,17 +775,18 @@ export default function App() {
   }, []);
 
   // --- SUPABASE: salvar dados ---
-  const saveToCloud = useCallback(async (newEvents, newTexts) => {
-    setSaveState('saving');
-    try {
-      const { error } = await supabase
-        .from('app_state')
-        .upsert({
-          id: SUPABASE_ROW_ID,
-          events: newEvents,
-          custom_texts: newTexts,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
+  // --- SUPABASE: salvar dados ---
+const saveToCloud = useCallback(async (newEvents, newTexts) => {
+  setSaveState('saving');
+  try {
+    const { error } = await supabase
+      .from('app_state')
+      .upsert({
+        id: SUPABASE_ROW_ID,
+        events: newEvents,
+        custom_texts: newTexts,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
 
       if (error) throw error;
 
@@ -784,7 +794,7 @@ export default function App() {
       setHasUnsaved(false);
       setSaveState('success');
     } catch (e) {
-      console.error('Erro ao salvar:', e);
+      console.error('Erro ao salvar:', JSON.stringify(e));
       setSaveState('error');
     }
     setTimeout(() => setSaveState(null), 3000);
@@ -889,11 +899,10 @@ export default function App() {
       </main>
 
       <div className="fixed bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-500 z-40">
-        {cloudConnection === 'online' ? <><Cloud size={14} className="text-emerald-500" /> Ligado à Nuvem</>
-          : cloudConnection === 'connecting' ? <><Loader2 size={14} className="text-blue-500 animate-spin" /> A ligar...</>
-          : <><CloudOff size={14} className="text-red-500" /> Offline</>}
+        {cloudConnection === 'online' ? <span className="flex items-center gap-2"><Cloud size={14} className="text-emerald-500" /><span>Ligado à Nuvem</span></span>
+  : cloudConnection === 'connecting' ? <span className="flex items-center gap-2"><Loader2 size={14} className="text-blue-500 animate-spin" /><span>A ligar...</span></span>
+  : <span className="flex items-center gap-2"><CloudOff size={14} className="text-red-500" /><span>Offline</span></span>}
       </div>
-
       {saveState && (
         <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-xl border border-slate-200 p-4 flex items-center gap-3 z-50">
           {saveState === 'saving' && <><Loader2 className="animate-spin text-blue-600" size={20} /><span className="text-slate-700 font-medium">Salvando...</span></>}
