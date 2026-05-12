@@ -761,11 +761,13 @@ export default function App() {
         if (error && error.code !== 'PGRST116') throw error;
 
         if (data) {
-          const fetchedEvents = data.events || defaultInitialEvents;
-          const fetchedTexts = data.custom_texts || {};
-          cloudSnapshot.current = { events: fetchedEvents, customTexts: fetchedTexts };
-          setEvents(fetchedEvents);
-          setCustomTexts(fetchedTexts);
+        const fetchedEvents = data.events || defaultInitialEvents;
+        const fetchedTexts = data.custom_texts || {};
+        const fetchedMetricas = data.metricas_canais || {};
+        cloudSnapshot.current = { events: fetchedEvents, customTexts: fetchedTexts, metricasCanais: fetchedMetricas };
+        setEvents(fetchedEvents);
+        setCustomTexts(fetchedTexts);
+        setMetricasCanais(fetchedMetricas);
         }
         setCloudConnection('online');
       } catch (e) {
@@ -778,17 +780,18 @@ export default function App() {
 
   // --- SUPABASE: salvar dados ---
   // --- SUPABASE: salvar dados ---
-const saveToCloud = useCallback(async (newEvents, newTexts) => {
+const saveToCloud = useCallback(async (newEvents, newTexts, newMetricas = metricasCanais) => {
   setSaveState('saving');
   try {
     const { error } = await supabase
       .from('app_state')
       .upsert({
-        id: SUPABASE_ROW_ID,
-        events: newEvents,
-        custom_texts: newTexts,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+    id: SUPABASE_ROW_ID,
+    events: newEvents,
+    custom_texts: newTexts,
+    metricas_canais: newMetricas,
+    updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
 
       if (error) throw error;
 
