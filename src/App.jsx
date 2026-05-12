@@ -854,8 +854,9 @@ const saveToCloud = useCallback(async (newEvents, newTexts, newMetricas = metric
   { id: 'editorias', label: 'Editorias', icon: FileText },
   { id: 'objetivos', label: 'Objetivos', icon: Target },
   { id: 'estrategia', label: 'Estratégia', icon: CompassIcon },
-  { id: 'calendario', label: 'Calendário', icon: CalendarIcon },
   { id: 'canais', label: 'Canais', icon: BarChart3 },
+  { id: 'calendario', label: 'Calendário', icon: CalendarIcon },
+  
 ];
 
   const sharedProps = { isAuth, customTexts, onTextBlur: handleTextBlur };
