@@ -1,6 +1,7 @@
 import './index.css';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from './supabase.js';
+import TabCanais from './TabCanais.jsx';
 import {
   BarChart3, Users, FileText, Target, Map, Calendar as CalendarIcon,
   AlertTriangle, CheckCircle, ChevronDown, Plus, Trash2, Filter,
@@ -740,6 +741,7 @@ export default function App() {
 
   const [cloudConnection, setCloudConnection] = useState('connecting');
   const [events, setEvents] = useState(defaultInitialEvents);
+  const [metricasCanais, setMetricasCanais] = useState({});
   const [customTexts, setCustomTexts] = useState({});
   const [hasUnsaved, setHasUnsaved] = useState(false);
   const [saveState, setSaveState] = useState(null);
@@ -824,6 +826,14 @@ const saveToCloud = useCallback(async (newEvents, newTexts) => {
     saveToCloud(newEvents, customTexts);
   }, [customTexts, saveToCloud]);
 
+  const handleSaveMetricas = useCallback((chave, dados) => {
+  setMetricasCanais(prev => {
+    const novo = { ...prev, [chave]: dados };
+    saveToCloud(events, customTexts, novo);
+    return novo;
+  });
+}, [events, customTexts, saveToCloud]);
+
   const handleLoginClick = () => {
     if (isAuth) { setIsAuth(false); if (hasUnsaved) handleSave(); }
     else { setPasswordInput(''); setLoginError(false); setIsLoginModalOpen(true); }
@@ -836,13 +846,14 @@ const saveToCloud = useCallback(async (newEvents, newTexts) => {
   };
 
   const tabs = [
-    { id: 'panorama', label: 'Panorama', icon: BarChart3 },
-    { id: 'personas', label: 'Personas', icon: Users },
-    { id: 'editorias', label: 'Editorias', icon: FileText },
-    { id: 'objetivos', label: 'Objetivos', icon: Target },
-    { id: 'estrategia', label: 'Estratégia', icon: CompassIcon },
-    { id: 'calendario', label: 'Calendário 2026+', icon: CalendarIcon },
-  ];
+  { id: 'panorama', label: 'Panorama', icon: BarChart3 },
+  { id: 'personas', label: 'Personas', icon: Users },
+  { id: 'editorias', label: 'Editorias', icon: FileText },
+  { id: 'objetivos', label: 'Objetivos', icon: Target },
+  { id: 'estrategia', label: 'Estratégia', icon: CompassIcon },
+  { id: 'calendario', label: 'Calendário', icon: CalendarIcon },
+  { id: 'canais', label: 'Canais', icon: BarChart3 },
+];
 
   const sharedProps = { isAuth, customTexts, onTextBlur: handleTextBlur };
 
@@ -896,6 +907,14 @@ const saveToCloud = useCallback(async (newEvents, newTexts) => {
         {activeTab === 'objetivos' && <TabObjetivos {...sharedProps} />}
         {activeTab === 'estrategia' && <TabEstrategia {...sharedProps} />}
         {activeTab === 'calendario' && <TabCalendario isAuth={isAuth} events={events} onUpdateEvents={handleUpdateEvents} />}
+        {activeTab === 'canais' && (
+  <TabCanais
+    isAuth={isAuth}
+    events={events}
+    metricas={metricasCanais}
+    onSaveMetricas={handleSaveMetricas}
+  />
+)}
       </main>
 
       <div className="fixed bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 shadow-sm rounded-full text-xs font-semibold text-slate-500 z-40">
